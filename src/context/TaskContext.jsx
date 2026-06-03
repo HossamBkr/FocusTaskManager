@@ -16,9 +16,9 @@ function getLocalDateString() {
 
 const mockInitialState = {
   dynamicTasks: [
-    { id: 'd1', title: 'Finish Q3 Report', priority: 2.5, date: '2026-06-02', status: 'pending' },
-    { id: 'd2', title: 'Schedule Dentist Appointment', priority: 4.0, date: getLocalDateString(), status: 'pending' },
-    { id: 'd3', title: 'Fix critical bug in auth flow', priority: 1.1, date: getLocalDateString(), status: 'pending' },
+    { id: 'd1', title: 'Finish Q3 Report', date: '2026-06-02', status: 'pending' },
+    { id: 'd2', title: 'Schedule Dentist Appointment', date: getLocalDateString(), status: 'pending' },
+    { id: 'd3', title: 'Fix critical bug in auth flow', date: getLocalDateString(), status: 'pending' },
   ],
   staticTasks: [
     { id: 's1', title: 'Morning Stretch', status: 'completed' },
@@ -48,23 +48,26 @@ export function TaskProvider({ children }) {
       newState.staticTasks = newState.staticTasks.map(t => ({ ...t, status: 'pending' }));
       
       // 2. Roll over dynamic tasks
-      newState.dynamicTasks = newState.dynamicTasks.map(t => {
+      const rolledOver = [];
+      const others = [];
+      
+      newState.dynamicTasks.forEach(t => {
         if (t.status === 'pending' && t.date < todayStr) {
-          return { ...t, date: todayStr };
+          rolledOver.push({ ...t, date: todayStr });
+        } else {
+          others.push(t);
         }
-        return t;
       });
+      
+      // Prepend rolled over tasks so they have highest priority
+      newState.dynamicTasks = [...rolledOver, ...others];
       
       // 3. Limit and Backlog logic
       const todaysPending = newState.dynamicTasks.filter(t => t.status === 'pending' && t.date === todayStr);
       if (todaysPending.length > 10) {
-        todaysPending.sort((a, b) => a.priority - b.priority);
-        
         const toBacklogIds = new Set(todaysPending.slice(10).map(t => t.id));
-        
         const toBacklogTasks = newState.dynamicTasks.filter(t => toBacklogIds.has(t.id));
         newState.backlog = [...newState.backlog, ...toBacklogTasks];
-        
         newState.dynamicTasks = newState.dynamicTasks.filter(t => !toBacklogIds.has(t.id));
       }
       
@@ -114,6 +117,21 @@ export function TaskProvider({ children }) {
     }));
   };
 
+  const reorderDynamicTasks = (activeId, overId) => {
+    setState(prev => {
+      const oldIndex = prev.dynamicTasks.findIndex(t => t.id === activeId);
+      const newIndex = prev.dynamicTasks.findIndex(t => t.id === overId);
+      
+      if (oldIndex !== -1 && newIndex !== -1) {
+        const newTasks = [...prev.dynamicTasks];
+        const [movedItem] = newTasks.splice(oldIndex, 1);
+        newTasks.splice(newIndex, 0, movedItem);
+        return { ...prev, dynamicTasks: newTasks };
+      }
+      return prev;
+    });
+  };
+
   const addStaticTask = (title) => {
     setState(prev => ({
       ...prev,
@@ -152,8 +170,7 @@ export function TaskProvider({ children }) {
     const todaysPending = state.dynamicTasks.filter(t => t.status === 'pending' && t.date === todayStr);
     if (todaysPending.length === 0) return null;
     
-    // Lowest float = highest priority
-    todaysPending.sort((a, b) => a.priority - b.priority);
+    // Implicit priority: The first item in the array is the highest priority
     return todaysPending[0];
   };
 
@@ -168,6 +185,7 @@ export function TaskProvider({ children }) {
       completeStaticTask,
       addDynamicTask,
       deleteDynamicTask,
+      reorderDynamicTasks,
       addStaticTask,
       deleteStaticTask,
       reorderStaticTasks,

@@ -68,9 +68,11 @@ export default function RoutinesManager() {
     }
   };
 
+  const isAtLimit = staticTasks.length >= 12;
+
   const handleAdd = (e) => {
     e.preventDefault();
-    if (newRoutine.trim()) {
+    if (newRoutine.trim() && !isAtLimit) {
       addStaticTask(newRoutine.trim());
       setNewRoutine('');
     }
@@ -85,12 +87,14 @@ export default function RoutinesManager() {
           type="text" 
           value={newRoutine}
           onChange={(e) => setNewRoutine(e.target.value)}
-          placeholder="New daily routine..."
-          className="flex-1 border rounded-xl px-4 py-3 text-zinc-900 dark:text-zinc-200 placeholder-zinc-500 focus:outline-none transition-colors bg-white dark:bg-zinc-900/50 border-zinc-300 dark:border-zinc-800"
+          placeholder={isAtLimit ? "Limit reached (12 max)" : "New daily routine..."}
+          maxLength={50}
+          disabled={isAtLimit}
+          className="flex-1 border rounded-xl px-4 py-3 text-zinc-900 dark:text-zinc-200 placeholder-zinc-500 focus:outline-none transition-colors bg-white dark:bg-zinc-900/50 border-zinc-300 dark:border-zinc-800 disabled:opacity-50"
         />
         <button 
           type="submit"
-          disabled={!newRoutine.trim()}
+          disabled={!newRoutine.trim() || isAtLimit}
           className="bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 px-6 py-3 rounded-xl font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
         >
           Add
