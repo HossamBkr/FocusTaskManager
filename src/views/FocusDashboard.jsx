@@ -1,6 +1,13 @@
 import React from 'react';
 import { useTasks } from '../context/TaskContext';
 
+function getLocalDateString() {
+  const date = new Date();
+  return new Date(date.getTime() - (date.getTimezoneOffset() * 60000))
+    .toISOString()
+    .split('T')[0];
+}
+
 export default function FocusDashboard() {
   const { activeDynamicTask, staticTasks, completeDynamicTask, completeStaticTask } = useTasks();
 
@@ -47,7 +54,7 @@ export default function FocusDashboard() {
         </h3>
         
         <div className="flex flex-wrap gap-3">
-          {staticTasks.map(task => {
+          {staticTasks.filter(t => t.status === 'pending' || t.lastCompletedDate === getLocalDateString()).map(task => {
             const isCompleted = task.status === 'completed';
             return (
               <button

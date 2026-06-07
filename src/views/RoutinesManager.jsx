@@ -30,11 +30,18 @@ function SortableRoutineItem({ task, onDelete }) {
       {...listeners}
       className="flex items-center justify-between p-4 rounded-2xl group transition-colors cursor-grab active:cursor-grabbing border bg-white/50 dark:bg-zinc-900/30 border-zinc-200 dark:border-zinc-800/80 hover:bg-zinc-50 dark:hover:bg-zinc-900/50"
     >
-      <div className="flex items-center gap-3">
-        <svg className="w-4 h-4 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div className="flex items-center gap-3 flex-1 min-w-0 pr-4">
+        <svg className="w-4 h-4 text-zinc-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 8h16M4 16h16" />
         </svg>
-        <span className="text-zinc-700 dark:text-zinc-300">{task.title}</span>
+        <div className="flex flex-col gap-1 sm:flex-row sm:items-center min-w-0">
+          <span className="text-zinc-700 dark:text-zinc-300 break-words whitespace-pre-wrap">{task.title}</span>
+          {task.frequency > 1 && (
+            <span className="inline-flex items-center justify-center text-[10px] font-medium text-zinc-500 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800/80 px-2 py-0.5 rounded-full mt-1 sm:mt-0 sm:ml-2 whitespace-nowrap self-start sm:self-center">
+              Every {task.frequency} days
+            </span>
+          )}
+        </div>
       </div>
       <button 
         onPointerDown={(e) => e.stopPropagation()}
@@ -53,6 +60,7 @@ function SortableRoutineItem({ task, onDelete }) {
 export default function RoutinesManager() {
   const { staticTasks, addStaticTask, deleteStaticTask, reorderStaticTasks } = useTasks();
   const [newRoutine, setNewRoutine] = useState('');
+  const [newFrequency, setNewFrequency] = useState(1);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -68,13 +76,14 @@ export default function RoutinesManager() {
     }
   };
 
-  const isAtLimit = staticTasks.length >= 12;
+  const isAtLimit = staticTasks.length >= 18;
 
   const handleAdd = (e) => {
     e.preventDefault();
     if (newRoutine.trim() && !isAtLimit) {
-      addStaticTask(newRoutine.trim());
+      addStaticTask(newRoutine.trim(), parseInt(newFrequency) || 1);
       setNewRoutine('');
+      setNewFrequency(1);
     }
   };
 
@@ -87,11 +96,24 @@ export default function RoutinesManager() {
           type="text" 
           value={newRoutine}
           onChange={(e) => setNewRoutine(e.target.value)}
-          placeholder={isAtLimit ? "Limit reached (12 max)" : "New daily routine..."}
-          maxLength={50}
+          placeholder={isAtLimit ? "Limit reached (18 max)" : "New daily routine..."}
+          maxLength={400}
           disabled={isAtLimit}
-          className="flex-1 border rounded-xl px-4 py-3 text-zinc-900 dark:text-zinc-200 placeholder-zinc-500 focus:outline-none transition-colors bg-white dark:bg-zinc-900/50 border-zinc-300 dark:border-zinc-800 disabled:opacity-50"
+          className="flex-1 border rounded-xl px-4 py-3 text-zinc-900 dark:text-zinc-200 placeholder-zinc-500 focus:outline-none transition-colors bg-white dark:bg-zinc-900/50 border-zinc-300 dark:border-zinc-800 disabled:opacity-50 min-w-[120px]"
         />
+        <div className="hidden sm:flex items-center gap-2 border rounded-xl px-3 py-3 bg-white dark:bg-zinc-900/50 border-zinc-300 dark:border-zinc-800 shrink-0">
+          <span className="text-sm text-zinc-500 whitespace-nowrap">Every</span>
+          <input 
+            type="number" 
+            min="1" 
+            max="30"
+            value={newFrequency}
+            onChange={(e) => setNewFrequency(e.target.value)}
+            disabled={isAtLimit}
+            className="w-10 text-center bg-transparent text-zinc-900 dark:text-zinc-200 focus:outline-none disabled:opacity-50 dark:[color-scheme:dark]"
+          />
+          <span className="text-sm text-zinc-500 whitespace-nowrap">days</span>
+        </div>
         <button 
           type="submit"
           disabled={!newRoutine.trim() || isAtLimit}

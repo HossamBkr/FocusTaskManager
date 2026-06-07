@@ -45,7 +45,20 @@ export function TaskProvider({ children }) {
       let newState = { ...state };
       
       // 1. Reset static tasks
-      newState.staticTasks = newState.staticTasks.map(t => ({ ...t, status: 'pending' }));
+      newState.staticTasks = newState.staticTasks.map(t => {
+        if (!t.lastCompletedDate) {
+          return { ...t, status: 'pending' };
+        }
+        
+        const lastDate = new Date(t.lastCompletedDate + 'T00:00:00');
+        const today = new Date(todayStr + 'T00:00:00');
+        const diffDays = Math.round((today - lastDate) / (1000 * 60 * 60 * 24));
+        
+        if (diffDays >= (t.frequency || 1)) {
+          return { ...t, status: 'pending' };
+        }
+        return t;
+      });
       
       // 2. Roll over dynamic tasks
       const rolledOver = [];
@@ -94,7 +107,7 @@ export function TaskProvider({ children }) {
     setState(prev => ({
       ...prev,
       staticTasks: prev.staticTasks.map(t => 
-        t.id === id ? { ...t, status: 'completed' } : t
+        t.id === id ? { ...t, status: 'completed', lastCompletedDate: getLocalDateString() } : t
       )
     }));
   };
@@ -132,13 +145,15 @@ export function TaskProvider({ children }) {
     });
   };
 
-  const addStaticTask = (title) => {
+  const addStaticTask = (title, frequency = 1) => {
     setState(prev => ({
       ...prev,
       staticTasks: [...prev.staticTasks, {
         id: `s-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         title,
-        status: 'pending'
+        status: 'pending',
+        frequency,
+        lastCompletedDate: null
       }]
     }));
   };

@@ -31,7 +31,7 @@ function SortableDynamicItem({ task, onDelete }) {
       className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-white/50 dark:bg-zinc-900/30 border border-zinc-200 dark:border-zinc-800/80 rounded-2xl group hover:border-zinc-300 dark:hover:border-zinc-700 transition-colors gap-4 cursor-grab active:cursor-grabbing"
     >
       <div className="flex-1">
-        <h3 className="text-zinc-900 dark:text-zinc-200 font-medium text-sm mb-1">{task.title}</h3>
+        <h3 className="text-zinc-900 dark:text-zinc-200 font-medium text-sm mb-1 break-words whitespace-pre-wrap">{task.title}</h3>
         <div className="flex items-center gap-4 text-xs text-zinc-500">
           <span className="flex items-center gap-1.5">
             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -109,7 +109,7 @@ export default function Planner() {
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Task title..."
-            maxLength={50}
+            maxLength={400}
             className="flex-1 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-zinc-900 dark:text-zinc-200 placeholder-zinc-500 dark:placeholder-zinc-600 focus:outline-none focus:border-zinc-400 dark:focus:border-zinc-600 transition-colors"
             required
           />
