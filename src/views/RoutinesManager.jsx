@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useTasks } from '../context/TaskContext';
-import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { DndContext, closestCenter, KeyboardSensor, TouchSensor, MouseSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -63,7 +63,8 @@ export default function RoutinesManager() {
   const [newFrequency, setNewFrequency] = useState(1);
 
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(MouseSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 5 } }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })
@@ -109,8 +110,14 @@ export default function RoutinesManager() {
             max="30"
             value={newFrequency}
             onChange={(e) => setNewFrequency(e.target.value)}
+            onBlur={(e) => {
+              let val = parseInt(e.target.value, 10);
+              if (isNaN(val) || val < 1) val = 1;
+              if (val > 30) val = 30;
+              setNewFrequency(val);
+            }}
             disabled={isAtLimit}
-            className="w-10 text-center bg-transparent text-zinc-900 dark:text-zinc-200 focus:outline-none disabled:opacity-50 dark:[color-scheme:dark]"
+            className="w-10 text-center bg-transparent text-zinc-900 dark:text-zinc-200 focus:outline-none disabled:opacity-50 dark:[color-scheme:dark] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
           />
           <span className="text-sm text-zinc-500 whitespace-nowrap">days</span>
         </div>
