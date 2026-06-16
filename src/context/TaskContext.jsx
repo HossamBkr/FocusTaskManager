@@ -123,6 +123,15 @@ export function TaskProvider({ children }) {
     }));
   };
 
+  const editDynamicTask = (id, newTitle) => {
+    setState(prev => ({
+      ...prev,
+      dynamicTasks: prev.dynamicTasks.map(t => 
+        t.id === id ? { ...t, title: newTitle } : t
+      )
+    }));
+  };
+
   const deleteDynamicTask = (id) => {
     setState(prev => ({
       ...prev,
@@ -199,6 +208,7 @@ export function TaskProvider({ children }) {
       completeDynamicTask,
       completeStaticTask,
       addDynamicTask,
+      editDynamicTask,
       deleteDynamicTask,
       reorderDynamicTasks,
       addStaticTask,
