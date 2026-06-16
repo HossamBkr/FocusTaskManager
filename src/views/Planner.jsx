@@ -51,6 +51,7 @@ function SortableDynamicItem({ task, onDelete, onEdit }) {
             onChange={(e) => setEditValue(e.target.value)}
             onBlur={handleSave}
             onKeyDown={(e) => {
+              e.stopPropagation();
               if (e.key === 'Enter') handleSave();
             }}
             onPointerDown={(e) => e.stopPropagation()}
