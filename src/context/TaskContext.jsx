@@ -154,7 +154,7 @@ export function TaskProvider({ children }) {
     });
   };
 
-  const addStaticTask = (title, frequency = 1) => {
+  const addStaticTask = (title, frequency = 1, startDate) => {
     setState(prev => ({
       ...prev,
       staticTasks: [...prev.staticTasks, {
@@ -162,6 +162,7 @@ export function TaskProvider({ children }) {
         title,
         status: 'pending',
         frequency,
+        startDate: startDate || getLocalDateString(),
         lastCompletedDate: null
       }]
     }));

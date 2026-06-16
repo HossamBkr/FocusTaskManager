@@ -54,7 +54,10 @@ export default function FocusDashboard() {
         </h3>
         
         <div className="flex flex-wrap gap-3">
-          {staticTasks.filter(t => t.status === 'pending' || t.lastCompletedDate === getLocalDateString()).map(task => {
+          {staticTasks.filter(t => {
+            if (t.startDate && t.startDate > getLocalDateString()) return false;
+            return t.status === 'pending' || t.lastCompletedDate === getLocalDateString();
+          }).map(task => {
             const isCompleted = task.status === 'completed';
             return (
               <button

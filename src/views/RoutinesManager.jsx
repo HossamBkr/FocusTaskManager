@@ -5,6 +5,13 @@ import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSo
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
+function getLocalDateString() {
+  const date = new Date();
+  return new Date(date.getTime() - (date.getTimezoneOffset() * 60000))
+    .toISOString()
+    .split('T')[0];
+}
+
 function SortableRoutineItem({ task, onDelete }) {
   const {
     attributes,
@@ -36,9 +43,9 @@ function SortableRoutineItem({ task, onDelete }) {
         </svg>
         <div className="flex flex-col gap-1 sm:flex-row sm:items-center min-w-0">
           <span className="text-zinc-700 dark:text-zinc-300 break-words whitespace-pre-wrap">{task.title}</span>
-          {task.frequency > 1 && (
+          {(task.frequency > 1 || (task.startDate && task.startDate > getLocalDateString())) && (
             <span className="inline-flex items-center justify-center text-[10px] font-medium text-zinc-500 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800/80 px-2 py-0.5 rounded-full mt-1 sm:mt-0 sm:ml-2 whitespace-nowrap self-start sm:self-center">
-              Every {task.frequency} days
+              {(task.startDate && task.startDate > getLocalDateString()) ? `Starts ${task.startDate} • ` : ''}Every {task.frequency || 1} days
             </span>
           )}
         </div>
@@ -61,6 +68,7 @@ export default function RoutinesManager() {
   const { staticTasks, addStaticTask, deleteStaticTask, reorderStaticTasks } = useTasks();
   const [newRoutine, setNewRoutine] = useState('');
   const [newFrequency, setNewFrequency] = useState(1);
+  const [startDate, setStartDate] = useState(getLocalDateString());
 
   const sensors = useSensors(
     useSensor(MouseSensor, { activationConstraint: { distance: 5 } }),
@@ -82,9 +90,10 @@ export default function RoutinesManager() {
   const handleAdd = (e) => {
     e.preventDefault();
     if (newRoutine.trim() && !isAtLimit) {
-      addStaticTask(newRoutine.trim(), parseInt(newFrequency) || 1);
+      addStaticTask(newRoutine.trim(), parseInt(newFrequency) || 1, startDate);
       setNewRoutine('');
       setNewFrequency(1);
+      setStartDate(getLocalDateString());
     }
   };
 
@@ -92,42 +101,54 @@ export default function RoutinesManager() {
     <div className="max-w-2xl mx-auto px-6 py-12">
       <h1 className="text-3xl font-light text-zinc-900 dark:text-zinc-100 mb-8 tracking-tight">Daily Routines</h1>
       
-      <form onSubmit={handleAdd} className="flex gap-3 mb-10">
-        <input 
-          type="text" 
-          value={newRoutine}
-          onChange={(e) => setNewRoutine(e.target.value)}
-          placeholder={isAtLimit ? "Limit reached (18 max)" : "New daily routine..."}
-          maxLength={400}
-          disabled={isAtLimit}
-          className="flex-1 border rounded-xl px-4 py-3 text-zinc-900 dark:text-zinc-200 placeholder-zinc-500 focus:outline-none transition-colors bg-white dark:bg-zinc-900/50 border-zinc-300 dark:border-zinc-800 disabled:opacity-50 min-w-[120px]"
-        />
-        <div className="hidden sm:flex items-center gap-2 border rounded-xl px-3 py-3 bg-white dark:bg-zinc-900/50 border-zinc-300 dark:border-zinc-800 shrink-0">
-          <span className="text-sm text-zinc-500 whitespace-nowrap">Every</span>
+      <form onSubmit={handleAdd} className="flex flex-col gap-3 mb-10">
+        <div className="flex gap-3 w-full">
           <input 
-            type="number" 
-            min="1" 
-            max="30"
-            value={newFrequency}
-            onChange={(e) => setNewFrequency(e.target.value)}
-            onBlur={(e) => {
-              let val = parseInt(e.target.value, 10);
-              if (isNaN(val) || val < 1) val = 1;
-              if (val > 30) val = 30;
-              setNewFrequency(val);
-            }}
+            type="text" 
+            value={newRoutine}
+            onChange={(e) => setNewRoutine(e.target.value)}
+            placeholder={isAtLimit ? "Limit reached (18 max)" : "New daily routine..."}
+            maxLength={400}
             disabled={isAtLimit}
-            className="w-10 text-center bg-transparent text-zinc-900 dark:text-zinc-200 focus:outline-none disabled:opacity-50 dark:[color-scheme:dark] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+            className="flex-1 border rounded-xl px-4 py-3 text-zinc-900 dark:text-zinc-200 placeholder-zinc-500 focus:outline-none transition-colors bg-white dark:bg-zinc-900/50 border-zinc-300 dark:border-zinc-800 disabled:opacity-50 min-w-[120px]"
           />
-          <span className="text-sm text-zinc-500 whitespace-nowrap">days</span>
         </div>
-        <button 
-          type="submit"
-          disabled={!newRoutine.trim() || isAtLimit}
-          className="bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 px-6 py-3 rounded-xl font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-        >
-          Add
-        </button>
+        <div className="flex gap-3 w-full overflow-x-auto pb-1 sm:pb-0">
+          <input 
+            type="date" 
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+            disabled={isAtLimit}
+            className="w-36 shrink-0 bg-white dark:bg-zinc-900/50 border border-zinc-300 dark:border-zinc-800 rounded-xl px-4 py-3 text-sm text-zinc-900 dark:text-zinc-200 focus:outline-none transition-colors dark:[color-scheme:dark]"
+            required
+          />
+          <div className="flex items-center gap-2 border rounded-xl px-3 py-3 bg-white dark:bg-zinc-900/50 border-zinc-300 dark:border-zinc-800 shrink-0">
+            <span className="text-sm text-zinc-500 whitespace-nowrap">Every</span>
+            <input 
+              type="number" 
+              min="1" 
+              max="30"
+              value={newFrequency}
+              onChange={(e) => setNewFrequency(e.target.value)}
+              onBlur={(e) => {
+                let val = parseInt(e.target.value, 10);
+                if (isNaN(val) || val < 1) val = 1;
+                if (val > 30) val = 30;
+                setNewFrequency(val);
+              }}
+              disabled={isAtLimit}
+              className="w-10 text-center bg-transparent text-zinc-900 dark:text-zinc-200 focus:outline-none disabled:opacity-50 dark:[color-scheme:dark] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+            />
+            <span className="text-sm text-zinc-500 whitespace-nowrap">days</span>
+          </div>
+          <button 
+            type="submit"
+            disabled={!newRoutine.trim() || isAtLimit}
+            className="bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 px-6 py-3 rounded-xl font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shrink-0 ml-auto sm:ml-0"
+          >
+            Add
+          </button>
+        </div>
       </form>
 
       <div className="space-y-3">
